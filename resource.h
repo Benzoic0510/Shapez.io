@@ -1,16 +1,10 @@
-//
-// Created by BenzoicAcid on 2025/11/12.
-//
-
 #ifndef RESOURCE_H
 #define RESOURCE_H
 
+enum class ResourceType { IRON, COPPER, IRON_HALF };
 
-
-class resource {
+class Resource {
 
 };
-
-
 
 #endif //RESOURCE_H
