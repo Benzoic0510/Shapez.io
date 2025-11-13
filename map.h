@@ -24,6 +24,7 @@ public:
 	void placeMachine(Machine* m);                      //放置机器
 	void tick();
 	int getCoins();
+	bool inBounds(int x, int y);
 };
 
 #endif //MAP_H

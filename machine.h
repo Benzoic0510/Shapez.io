@@ -3,9 +3,11 @@
 
 #include <string>
 #include <iostream>
+#include <memory>
 using namespace std;
 
 class Map;    //前置声明
+class Item;
 
 enum class Direction { UP, DOWN, LEFT, RIGHT };
 
@@ -22,6 +24,7 @@ public:
 
 class Miner : public Machine {
 	Direction dir;
+	shared_ptr<Item> buffer = nullptr;
 public:
 	Miner(int x, int y, Direction d);
 	void update(Map& map) override;

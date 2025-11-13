@@ -49,3 +49,8 @@ void Map::tick() {
 int Map::getCoins() {
 	return hub.getCoins();
 }
+
+bool Map::inBounds(int x, int y) {
+	return x>=0 && x<rows && y>=0 && y<cols;
+}
+

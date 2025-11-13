@@ -10,28 +10,40 @@ Miner::Miner(int x, int y, Direction d) : Machine(x,y), dir(d) {}
 
 void Miner::update(Map& map) {
 	Tile& t = map.grid[x][y];
+
+	if (buffer) {
+		int nx = x, ny = y;
+		switch (dir) {
+			case Direction::UP: nx--; break;
+			case Direction::DOWN: nx++; break;
+			case Direction::LEFT: ny--; break;
+			case Direction::RIGHT: ny++; break;
+		}
+
+		//Out-of-bounds check
+		if (!map.inBounds(nx, ny)) return;
+
+		Tile& out = map.grid[nx][ny];
+
+		if (out.machine && out.machine->name() == "Conveyor") {
+			if (out.item == nullptr) {
+				out.item = buffer;
+				buffer = nullptr;
+				cout << "[Miner] pushed item to conveyor at (" << nx << "," << ny << ")\n";
+			}
+		}
+
+		//block error
+		if (buffer) return;
+	}
+
 	if (!t.resource) return;
 
 	//item create
 	static int global_id = 0;
 	auto item = make_shared<Item>(global_id++, t.resource);
+	buffer = item;
 	cout << "Miner at (" << x << "," << y << ") mining resource\n";
-
-	int nx = x, ny = y;
-	switch (dir) {
-		case Direction::UP: nx--; break;
-		case Direction::DOWN: nx++; break;
-		case Direction::LEFT: ny--; break;
-		case Direction::RIGHT: ny++; break;
-	}
-
-	Tile& out = map.grid[nx][ny];
-
-	if (out.item == nullptr) {
-		out.item = item;
-		cout << "[Miner] produced " << item->res->name()
-			 << " to (" << nx << "," << ny << ")\n";
-	}
 }
 
 string Miner::name() const { return "Miner"; }
