@@ -1,7 +1,8 @@
 #ifndef MAP_H
 #define MAP_H
 
-#include <bits/stdc++.h>
+#include <vector>
+#include <memory>
 #include "tile.h"
 #include "delivery.h"
 #include "machine.h"
@@ -9,6 +10,8 @@
 using namespace std;
 
 class Map {
+	friend class Miner;
+	friend class Conveyor;
 private:
 	int rows, cols;
 	vector<vector<Tile>> grid;             //地图网络
@@ -20,6 +23,7 @@ public:
 	void addResource(int x, int y, ResourceType type);  //添加矿物
 	void placeMachine(Machine* m);                      //放置机器
 	void tick();
+	int getCoins();
 };
 
 #endif //MAP_H
