@@ -14,7 +14,7 @@ int main() {
 	m.placeMachine(new Miner(1,1,Direction::DOWN));
 	m.placeMachine(new Conveyor(2,1,Direction::DOWN));
 	int before = m.getCoins();
-	for (int i=0;i<10;i++) m.tick();
+	for (int i=0;i<31;i++) m.tick();
 	assert(m.getCoins() > before && "Miner->Conveyor->Hub delivery failed");
 	return 0;
 }

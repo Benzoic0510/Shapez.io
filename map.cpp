@@ -26,6 +26,7 @@ void Map::addResource(int x, int y, ResourceType type) {
 void Map::placeMachine(Machine* m) {
 	machines.emplace_back(m);
 	grid[m->x][m->y].machine = m;
+	grid[m->x][m->y].machine->selfTile = &grid[m->x][m->y];
 	cout << "Placed machine: " << m->name() << "\n";
 }
 
