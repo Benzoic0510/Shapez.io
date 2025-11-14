@@ -5,32 +5,25 @@
 
 Machine::Machine(int x, int y) : x(x), y(y) {}
 
+
 //Miner
 Miner::Miner(int x, int y, Direction d, int cooldown) : Machine(x,y), dir(d), produceCooldown(cooldown) {}
 void Miner::update(Map& map) {
 	Tile& t = map.grid[x][y];
 
 	if (buffer) {
-		int nx = x, ny = y;
-		switch (dir) {
-			case Direction::UP: nx--; break;
-			case Direction::DOWN: nx++; break;
-			case Direction::LEFT: ny--; break;
-			case Direction::RIGHT: ny++; break;
-		}
+		int nx, ny;
+		Tile* front = nullptr;
 
-		//Out-of-bounds check
-		if (!map.inBounds(nx, ny)) return;
+		if (!map.getFrontTile(x, y, dir, nx, ny, front))
+			return;
 
-		Tile& out = map.grid[nx][ny];
-
-		if (out.machine && out.machine->canAccept(buffer)) {
-			out.machine->accept(buffer);
+		if (front->machine && front->machine->canAccept(buffer, dir)) {
+			front->machine->accept(buffer);
+			cout << "[Miner] pushed resource to (" << nx << "," << ny << ")\n";
 			buffer = nullptr;
-			cout << "[Miner] pushed item to conveyor at (" << nx << "," << ny << ")\n";
 		}
 
-		//block error
 		if (buffer) return;
 	}
 
@@ -42,46 +35,88 @@ void Miner::update(Map& map) {
 
 	//item create
 	static int global_id = 0;
-	auto item = make_shared<Item>(global_id++, t.resource);
-	buffer = item;
-	cout << "Miner at (" << x << "," << y << ") mining resource\n";
+	buffer = make_shared<Item>(global_id++, t.resource);
+	cout << "[Miner] mined resource at (" << x << "," << y << ")\n";
 }
-string Miner::name() const { return "Miner"; }
+
 
 
 //Conveyor
-Conveyor::Conveyor(int x, int y, Direction d, int cooldown) : Machine(x,y), dir(d), moveCooldown(cooldown) {}
+Conveyor::Conveyor(int x, int y, Direction d, Direction fromDir, int cooldown) : Machine(x,y), dir(d), fromDir(fromDir), moveCooldown(cooldown) {}
 void Conveyor::update(Map& map) {
-	moveTimer++;
-	if (moveTimer < moveCooldown) return;
-	moveTimer = 0;
-
-	Tile* from = selfTile;
-	if (!from->item) return;
-
-	int nx=x, ny=y;
-	switch (dir) {
-		case Direction::UP: nx--; break;
-		case Direction::DOWN: nx++; break;
-		case Direction::LEFT: ny--; break;
-		case Direction::RIGHT: ny++; break;
+	if (!buffer) {
+		moving = false;
+		moveTimer = 0;
+		return;
 	}
 
-	Tile& out = map.grid[nx][ny];
+	int nx, ny;
+	Tile* out = nullptr;
 
-	if (out.item == nullptr) {
-		out.item = from->item;
-		from->item = nullptr;
-		cout << "[Conveyor] moved item to (" << nx << "," << ny << ")\n";
+	if (!map.getFrontTile(x, y, dir, nx, ny, out)) {
+		moving = false;
+		moveTimer = 0;
+		return;
+	}
+
+	bool frontAcceptable = false;
+	Machine* fm = out->machine;
+
+	if (fm) {
+		frontAcceptable = fm->canAccept(buffer, dir);
+	} else if (out->type == TileType::DELIVERY) {
+		frontAcceptable = true;
+	} else {
+		frontAcceptable = false;
+	}
+
+	if (!frontAcceptable) {
+		moving = false;
+		moveTimer = 0;
+		return;
+	}
+
+	if (!moving) {
+		moving = true;
+		moveTimer = 0;
+	}
+
+	moveTimer++;
+
+	//still moving
+	if (moveTimer < moveCooldown)
+		return;
+
+	// Push to front machine using unified interface
+	if (fm) {
+		moveTimer = 0;
+		moving = false;
+		shared_ptr<Item> item = buffer;
+		fm->accept(item);
+		buffer = nullptr;
+	} else {
+		out->item = buffer;
+		buffer = nullptr;
 	}
 }
-string Conveyor::name() const { return "Conveyor"; }
-bool Conveyor::canAccept(shared_ptr<Item> item) {
-	return selfTile && selfTile->item == nullptr && item != nullptr;
+bool Conveyor::canAccept(shared_ptr<Item> item, Direction dir) {
+	if (!item) return false;
+    if (buffer && !moving) return false;
+
+	switch (dir) {
+		case Direction::UP: return fromDir == Direction::DOWN; break;
+		case Direction::DOWN: return fromDir == Direction::UP; break;
+		case Direction::LEFT: return fromDir == Direction::RIGHT; break;
+		case Direction::RIGHT: return fromDir == Direction::LEFT; break;
+		default: return false;
+	}
 }
 void Conveyor::accept(shared_ptr<Item> item) {
-	selfTile->item = item;
+	buffer = item;
+	moving = false;
+	moveTimer = 0;
 }
+
 
 
 //Cutter
@@ -90,6 +125,7 @@ void Cutter::update(Map& map) {
 	cout << "Cutter at (" << x << "," << y << ") cutting item\n";
 }
 string Cutter::name() const { return "Cutter"; }
+
 
 
 //TrashCan

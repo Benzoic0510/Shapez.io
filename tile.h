@@ -16,7 +16,7 @@ public:
 	TileType type = TileType::EMPTY;
 
 	shared_ptr<Resource> resource;    // 静态地块矿物
-	shared_ptr<Item> item = nullptr;  // 当前物品（动态）
+	shared_ptr<Item> item = nullptr;  // 当前物品（只有DeliveryHub使用）
 	Machine* machine = nullptr;       // 当前设备
 
 	Tile(int x=0, int y=0) : x(x), y(y) {}

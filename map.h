@@ -24,7 +24,9 @@ public:
 	void placeMachine(Machine* m);                      //放置机器
 	void tick();
 	int getCoins();
-	bool inBounds(int x, int y);
+	bool inBounds(int x, int y) const;
+	bool getFrontTile(int x, int y, Direction dir, int& nx, int& ny, Tile*& tile);
+
 };
 
 #endif //MAP_H
