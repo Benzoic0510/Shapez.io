@@ -64,14 +64,25 @@ public:
 };
 
 class Cutter : public Machine {
+	Direction dir;
+
+	int sx, sy;     // second tile
+
+	// Buffer
+	shared_ptr<Item> inputBuffer = nullptr;
+	shared_ptr<Item> outA = nullptr;
+	shared_ptr<Item> outB = nullptr;
+
+	int cooldown = 30;
+	int timer = 0;
 public:
-	Cutter(int x, int y);
+	Cutter(int x, int y, Direction d, int cooldown = 30);
 	void update(Map& map) override;
-	string name() const override;
-	//TODO
+	bool canAccept(shared_ptr<Item> item, Direction dir) override;
+	void accept(shared_ptr<Item> item) override;
+
+	string name() const override { return "Cutter"; }
 	Direction getDirection() const override { return Direction::UP; }
-	bool canAccept(shared_ptr<Item> item, Direction dir) override { return false; }
-	void accept(shared_ptr<Item> item) override { /* do nothing */ }
 };
 
 class TrashCan : public Machine {

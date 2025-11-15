@@ -120,11 +120,88 @@ void Conveyor::accept(shared_ptr<Item> item) {
 
 
 //Cutter
-Cutter::Cutter(int x, int y) : Machine(x,y) {}
-void Cutter::update(Map& map) {
-	cout << "Cutter at (" << x << "," << y << ") cutting item\n";
+Cutter::Cutter(int x, int y, Direction d, int cooldown) : Machine(x,y), dir(d), cooldown(cooldown) {
+	switch (dir) {
+		case Direction::UP: sx = x; sy = y+1; break;
+		case Direction::DOWN: sx = x; sy = y-1; break;
+		case Direction::LEFT: sx = x-1; sy = y; break;
+		case Direction::RIGHT: sx = x+1; sy = y; break;
+	}
 }
-string Cutter::name() const { return "Cutter"; }
+void Cutter::update(Map& map) {
+	auto tryOutput = [&](int ox, int oy, shared_ptr<Item>& slot) {
+		if (!slot) return;
+
+		int nx, ny;
+		Tile* front = nullptr;
+		if (!map.getFrontTile(ox, oy, dir, nx, ny, front) || !front) {
+			return;
+		}
+
+		Machine* fm = front->machine;
+		if (fm && fm->canAccept(slot, dir)) {
+			fm->accept(slot);
+			slot = nullptr;
+		}
+	};
+
+	// left output (x, y) outA
+	tryOutput(x, y, outA);
+	// right output (sx, sy) outB
+	tryOutput(sx, sy, outB);
+
+	// still remain
+	if (outA || outB) {
+		return;
+	}
+
+	if (!inputBuffer) {
+		timer = 0;
+		return;
+	}
+
+	timer++;
+	if (timer < cooldown) {
+		return;
+	}
+	timer = 0;
+
+	// start cutting
+	switch (inputBuffer->res->type) {
+		case ResourceType::IRON : {
+			// new Resource(ResourceType::IRON_HALF)
+			auto halfA = make_shared<Resource>(ResourceType::IRON_HALF);
+			auto halfB = make_shared<Resource>(ResourceType::IRON_HALF);
+			outA = make_shared<Item>(inputBuffer->id, halfA);
+			outB = make_shared<Item>(inputBuffer->id, halfB);
+			cout << "[Cutter] at (" << x << "," << y << ") cut IRON into IRON_HALF + IRON_HALF\n";
+			break;
+		}
+		default: return;
+	}
+
+	inputBuffer = nullptr;
+}
+bool Cutter::canAccept(shared_ptr<Item> item, Direction fromdir) {
+	if (!item || !item->res->cuttable) return false;
+
+	bool correctInput = false;
+
+	switch (dir) {
+		case Direction::UP:    correctInput = (fromdir == Direction::DOWN); break;
+		case Direction::DOWN:  correctInput = (fromdir == Direction::UP); break;
+		case Direction::LEFT:  correctInput = (fromdir == Direction::RIGHT); break;
+		case Direction::RIGHT: correctInput = (fromdir == Direction::LEFT); break;
+	}
+
+	if (!correctInput) return false;
+
+	return inputBuffer == nullptr;
+}
+void Cutter::accept(shared_ptr<Item> item) {
+	inputBuffer = item;
+	cout << "[Cutter] at (" << x << "," << y << ") accepted item\n";
+}
 
 
 
