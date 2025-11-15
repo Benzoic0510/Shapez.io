@@ -88,10 +88,10 @@ public:
 class TrashCan : public Machine {
 	TrashCan(int x, int y);
 	void update(Map& map) override;
-	string name() const override;
-	//TODO
-	Direction getDirection() const override { return Direction::UP; }
 	bool canAccept(shared_ptr<Item> item, Direction dir) override { return true; }
 	void accept(shared_ptr<Item> item) override { /* do nothing */ }
+
+	string name() const override { return "TrashCan"; }
+	Direction getDirection() const override { return Direction::UP; }
 };
 #endif //MACHINE_H

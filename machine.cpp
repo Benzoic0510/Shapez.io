@@ -208,6 +208,5 @@ void Cutter::accept(shared_ptr<Item> item) {
 //TrashCan
 TrashCan::TrashCan(int x, int y) : Machine(x,y) {}
 void TrashCan::update(Map& map) {
-	cout << "TrashCan at (" << x << "," << y << ") destroying item\n";
+	cout << "TrashCan at (" << x << "," << y << ") clear\n";
 }
-string TrashCan::name() const { return "TrashCan"; }
